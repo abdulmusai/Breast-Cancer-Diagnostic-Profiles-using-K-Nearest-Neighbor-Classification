@@ -1,32 +1,37 @@
-# Diagnostic Analysis via Instance-Based KNN Learning
-## 📈 Executive Summary and Project Goals
-This project implements a K-Nearest Neighbors (KNN) classification framework to accurately identify whether observed tissues are Malignant or Benign. The pipeline handles data cleaning, normalizes features to prevent scaling bias, tunes the value of $k$ through cross-validation, and provides comprehensive performance metrics.
+# Supervised Pattern Recognition: KNN Tissue Classification
+## 📊 Project Pivot & Scope Alignment
+This project updates the previous framework, shifting from unsupervised K-Means clustering to a **Supervised K-Nearest Neighbors (KNN) Classification** model. Using structural profiles from the dataset, the updated framework directly predicts diagnostic classes (`Malignant` vs. `Benign`) using an optimized, distance-scaled pipeline.
 ---
-## 🛠️ Data Wrangling and Normalization Process
-1.  **Ingestion & Format Adjustments:** The raw tracking document contains an initial line grouping error. To fix this, the loading pipeline skips the corrupted header tracking line and structures the feature metrics manually into distinct columns (`radius_mean`, `texture_mean`, `perimeter_mean`, etc.).
-2.  **Missing Value Mitigation:** Rows containing incomplete observations are removed to protect the distance space from imputation bias.
-3.  **Why Feature Scaling is Crucial for KNN:**
-    KNN relies completely on distance metrics (like Euclidean distance) to determine point proximity:
-    $$d(p, q) = \sqrt{\sum_{i=1}^{n} (p_i - q_i)^2}$$
-    Features with large numeric variations (such as `area_mean` which ranges up to 1000+) will completely overwhelm features with small values (such as `smoothness_mean` which stays below 1). We apply `StandardScaler` to bring all features to a mean of 0 and variance of 1, ensuring every attribute contributes equally to the distance calculations.
+## 🛠️ Supervised Data Preprocessing and Normalization
+1. **Target Feature Assignment:** Handled data loading with fallback encodings (`latin1`) to fix character parsing errors. The `diagnosis` attribute was mapped to a binary classification target variable (`Malignant = 1`, `Benign = 0`).
+2. **Stratified Partitioning:** Implemented an 80/20 train/test split with stratification (`stratify=y`) to maintain the same ratio of class labels across both partitions.
+3. **Distance Standardization Matrix:** Because KNN uses distance metrics (such as Euclidean distance) to identify neighboring points:
+   $$d(p, q) = \sqrt{\sum_{i=1}^{n} (p_i - q_i)^2}$$
+   Features with large raw numerical values (like `area_mean`, which ranges up to 1000+) would dominate features with smaller scales (like `smoothness_mean`, which is less than 1). We apply `StandardScaler` to normalize all variables to a mean of 0 and a variance of 1, ensuring every feature contributes equally to the distance calculation.
 ---
-## 🧪 Hyperparameter Optimization Tuning
-To find the optimal balance between underfitting and overfitting, we evaluate several values for neighbor parameters ($k = 1, 3, 5, 7, 9, 11$) using 5-fold cross-validation across the training partition.
-
-* **Low values of $k$ (e.g., $k=1$):** High variance, capturing noise and creating complex, erratic decision boundaries.
-* **High values of $k$ (e.g., $k=11$):** High bias, smoothing the decision boundaries too much and potentially missing localized patterns.
-* **Optimal Setting:** The script automatically flags the neighbor parameter that achieves the highest mean cross-validation accuracy, which serves as our final configuration model.
+## 🧬 Hyperparameter Tuning via 5-Fold Cross-Validation
+Instead of using the Elbow Method (which applies only to unsupervised cluster variance), we optimized the neighbor hyperparameter ($k \in [1, 3, 5, 7, 9, 11]$) using 5-fold cross-validation on the training set.
+* **k = 1:** Yielded a mean cross-validation accuracy of **`0.9250`** (at risk of overfitting due to high local variance).
+* **k = 3:** Yielded a mean cross-validation accuracy of **`0.9375`**.
+* **k = 5:** Achieved a peak mean cross-validation accuracy of **`0.9625`**.
+* **k = 7, 9, 11:** Performance stabilized at **`0.9500`**.
+**Optimal Model Decision:** The system selected **$k = 5$** as the optimal choice, balancing local boundary details with global generalization capability.
 ---
-## 📋 Comprehensive Model Performance Framework
-The final optimized KNN model is validated using a held-out test split (20% of the dataset) to ensure an unbiased evaluation. Performance is assessed using several key classification metrics:
-* **Accuracy:** Overall proportion of correct classifications.
-* **Precision:** Out of all cases predicted as malignant, the percentage that are truly malignant (critical for minimizing false alarms).
-* **Recall (Sensitivity):** Out of all actual malignant cases, the percentage the model successfully identified (vital for ensuring no dangerous cases are missed).
-* **F1-Score:** The harmonic mean of Precision and Recall, providing a reliable single measure of performance for balanced classes.
-* **Confusion Matrix Heatmap:** Provides a clear visual breakdown of true positives, true negatives, false positives, and false negatives.
+## 🏁 Comprehensive Classification Evaluation Metrics
+The final configuration ($k=5$) was validated against the independent 20% holdout split, yielding the following results:
+* **Out-of-Sample Overall Accuracy:** **`0.8500`** (85.0% correct classifications on unseen test records).
+* **Granular Class Performance Profile:**
+  * **Benign Class (0):** Precision = `0.83` | Recall = `0.71` | F1-Score = `0.77`
+  * **Malignant Class (1):** Precision = `0.86` | Recall = `0.92` | F1-Score = `0.89`
+* **Confusion Matrix Breakdown:**
+  * **True Benign (TN):** 5 instances correctly classified.
+  * **False Malignant (FP - False Alarms):** 2 instances.
+  * **False Benign (FN - Misses):** 1 instance.
+  * **True Malignant (TP):** 12 instances correctly identified.
+This evaluation demonstrates strong performance. In a diagnostic setting, the high recall for malignant cases (`0.92`) is particularly valuable, as it minimizes dangerous false negatives (missing an actual abnormality).
 ---
-## 🚀 Environment Requirements (`requirements.txt`)
-To run this pipeline locally, save these dependencies in a text file named `requirements.txt` and install them via pip:
+## 📦 Local Installation and Execution (`requirements.txt`)
+To run this pipeline locally, install the necessary project dependencies via pip:
 ```text
 pandas>=2.0.0
 numpy>=1.24.0
